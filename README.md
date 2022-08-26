@@ -34,7 +34,7 @@ Please report any issues you see.
 - Run into issues after updating the mod? Try deleting your config file, then booting the game to generate a new one.
 
 ## Screenshots
-|  |
+| ![ezgif-5-8c9e6fffc1](https://user-images.githubusercontent.com/695941/186994307-31006ada-6571-4b27-adf8-f87d838d4d60.gif) |
 |:--:|
 | Ultrawide pillarbox removal. | 
 
