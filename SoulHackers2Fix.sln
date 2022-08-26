@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32630.192
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SoulHackers2Fix", "SoulHackers2Fix.csproj", "{2797660F-5114-454C-9CEA-16B304A262C5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2797660F-5114-454C-9CEA-16B304A262C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2797660F-5114-454C-9CEA-16B304A262C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2797660F-5114-454C-9CEA-16B304A262C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2797660F-5114-454C-9CEA-16B304A262C5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A947E403-8B35-4AFA-A0D8-D1665DE3F951}
+	EndGlobalSection
+EndGlobal
