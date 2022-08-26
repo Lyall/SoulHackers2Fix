@@ -3,7 +3,7 @@
 [![Github All Releases](https://img.shields.io/github/downloads/Lyall/SoulHackers2Fix/total.svg)](https://github.com/Lyall/SoulHackers2Fix/releases)
 
 This BepInEx plugin for the game Soul Hackers 2 features:
-- Proper ultrawide and non-16:9 aspect ratio support with pillarbox removal.
+- Proper ultrawide and non-16:9 aspect ratio support with pillarbox/letterbox removal.
 <!-- - Smoother camera movement with a higher update rate. -->
 <!-- - Intro/logos skip. -->
 <!-- - Graphical tweaks to increase fidelity. -->
