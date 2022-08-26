@@ -27,7 +27,7 @@ jobs:
     - run: unzip BepInEx-Unity* -d ${{ github.event.repository.name }}
     - run: cp BepInEx.cfg ${{ github.event.repository.name }}/BepInEx/config/BepInEx.cfg
     - run: touch ${{ github.event.repository.name }}/EXTRACT_TO_GAME_DIRECTORY
-    - run: cd ${{ github.event.repository.name }}; zip -r ../${{ github.event.repository.name }}_${{ github.event.inputs.version }}.zip ./*
+    - run: cd ${{ github.event.repository.name }}; sudo zip -r ../${{ github.event.repository.name }}_${{ github.event.inputs.version }}.zip ./*
     - uses: ncipollo/release-action@v1
       with:
         artifacts: "${{ github.event.repository.name }}_${{ github.event.inputs.version }}.zip"
