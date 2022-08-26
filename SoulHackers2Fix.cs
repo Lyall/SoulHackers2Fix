@@ -10,7 +10,7 @@ using UnityEngine.UI;
 namespace SH2Fix
 {
     [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
-    public class SH2Fix : BasePlugin
+    public class SH2: BasePlugin
     {
         internal static new ManualLogSource Log;
 

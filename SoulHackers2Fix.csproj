@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-    <AssemblyName>SH2Fix</AssemblyName>
+    <AssemblyName>SoulHackers2Fix</AssemblyName>
     <Description>Soul Hackers 2 Fix</Description>
     <Version>0.0.1</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
