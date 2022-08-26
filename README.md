@@ -12,7 +12,7 @@ This BepInEx plugin for the game Soul Hackers 2 features:
 
 ## Installation
 - Grab the latest release of SoulHackers2Fix from [here.](https://github.com/Lyall/SoulHackers2Fix/releases)
-- Extract the contents of the release zip in to the game directory.<br />(e.g. "**steamapps\common\Soul Hackers 2**" for Steam).
+- Extract the contents of the release zip in to the game directory.<br />(e.g. "**steamapps\common\SOUL HACKERS2**" for Steam).
 - Run the game once to generate a config file located at **<GameDirectory>\BepInEx\config\SoulHackers2Fix.cfg**
 - The first launch may take a little while as BepInEx does its magic.
 
