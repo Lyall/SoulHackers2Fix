@@ -19,11 +19,11 @@ jobs:
       id: bepinexurl
     - run: wget https://builds.bepinex.dev${{ steps.bepinexurl.outputs.URL}}
     - run: mkdir -p ${{ github.event.repository.name }}/BepInEx/plugins
+    - run: mkdir -p ${{ github.event.repository.name }}/BepInEx/config
     - run: dotnet build -c Release -o build
     - run: cp build/${{ github.event.repository.name }}.dll ${{ github.event.repository.name }}/BepInEx/plugins/${{ github.event.repository.name }}.dll
-    - run: unzip BepInEx_Unity* -d ${{ github.event.repository.name }}
-    - run: mkdir -p ${{ github.event.repository.name }}/BepInEx/config
-    - run: cp BepInEx.cfg ${{ github.event.repository.name }}/BepInEx/config/BepInEx.cfg
+    - run: unzip BepInEx-Unity* -d ${{ github.event.repository.name }}
+    #- run: cp BepInEx.cfg ${{ github.event.repository.name }}/BepInEx/config/BepInEx.cfg
     - run: touch ${{ github.event.repository.name }}/EXTRACT_TO_GAME_DIRECTORY
     - run: cd ${{ github.event.repository.name }}; zip -r ../${{ github.event.repository.name }}_${{ github.event.inputs.version }}.zip ./*
     - uses: ncipollo/release-action@v1
