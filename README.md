@@ -4,11 +4,11 @@
 
 This BepInEx plugin for the game Soul Hackers 2 features:
 - Proper ultrawide and non-16:9 aspect ratio support with pillarbox removal.
-- Smoother camera movement with a higher update rate.
-- Intro/logos skip.
-- Graphical tweaks to increase fidelity.
-- Adjusting field of view.
-- Vert+ FOV at narrower than 16:9 aspect ratios.
+<!-- - Smoother camera movement with a higher update rate. -->
+<!-- - Intro/logos skip. -->
+<!-- - Graphical tweaks to increase fidelity. -->
+<!-- - Adjusting field of view. -->
+<!-- - Vert+ FOV at narrower than 16:9 aspect ratios. -->
 
 ## Installation
 - Grab the latest release of SoulHackers2Fix from [here.](https://github.com/Lyall/SoulHackers2Fix/releases)
