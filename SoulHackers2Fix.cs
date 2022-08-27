@@ -56,26 +56,26 @@ namespace SH2Fix
                                 //new AcceptableValueRange<float>(0f, 180f)));
 
             // Custom Resolution
-            bCustomResolution = Config.Bind("Set Custom Resolution",
-                                "CustomResolution",
-                                 false, // Disable by default as launcher should suffice.
-                                "Set to true to enable the custom resolution below.");
+            //bCustomResolution = Config.Bind("Set Custom Resolution",
+                                //"CustomResolution",
+                                //false, // Disable by default as launcher should suffice.
+                                //"Set to true to enable the custom resolution below.");
 
-            fDesiredResolutionX = Config.Bind("Set Custom Resolution",
-                                "ResolutionWidth",
-                                (float)Display.main.systemWidth, // Set default to display width so we don't leave an unsupported resolution as default.
-                                "Set desired resolution width.");
+            //fDesiredResolutionX = Config.Bind("Set Custom Resolution",
+                                //"ResolutionWidth",
+                                //(float)Display.main.systemWidth, // Set default to display width so we don't leave an unsupported resolution as default.
+                                //"Set desired resolution width.");
 
-            fDesiredResolutionY = Config.Bind("Set Custom Resolution",
-                                "ResolutionHeight",
-                                (float)Display.main.systemHeight, // Set default to display height so we don't leave an unsupported resolution as default.
-                                "Set desired resolution height.");
+            //fDesiredResolutionY = Config.Bind("Set Custom Resolution",
+                                //"ResolutionHeight",
+                                //(float)Display.main.systemHeight, // Set default to display height so we don't leave an unsupported resolution as default.
+                                //"Set desired resolution height.");
 
-            iWindowMode = Config.Bind("Set Custom Resolution",
-                                "WindowMode",
-                                 (int)1,
-                                new ConfigDescription("Set window mode. 1 = Exclusive Fullscreen, 2 = Fullscreen Windowed, 3 = Maximized Window, 4 = Windowed.",
-                                new AcceptableValueRange<int>(1, 4)));
+            //iWindowMode = Config.Bind("Set Custom Resolution",
+                                //"WindowMode",
+                                //(int)1,
+                                //new ConfigDescription("Set window mode. 1 = Exclusive Fullscreen, 2 = Fullscreen Windowed, 3 = Maximized Window, 4 = Windowed.",
+                                //new AcceptableValueRange<int>(1, 4)));
 
             // Graphical Settings
             iAnisotropicFiltering = Config.Bind("Graphical Tweaks",
@@ -102,10 +102,10 @@ namespace SH2Fix
                 Harmony.CreateAndPatchAll(typeof(UltrawidePatches));
             }
             // Run CustomResolutionPatches
-            if (bCustomResolution.Value)
-            {
-                Harmony.CreateAndPatchAll(typeof(CustomResolutionPatches));
-            }
+            //if (bCustomResolution.Value)
+            //{
+                //Harmony.CreateAndPatchAll(typeof(CustomResolutionPatches));
+            //}
             // Run FOVPatches
             //if (bFOVAdjust.Value)
             //{
@@ -128,6 +128,8 @@ namespace SH2Fix
             public static GameObject LetterboxingLeft;
             public static GameObject LetterboxingRight;
 
+            public static bool bLetterboxPatchHasRun = false;
+
             // Set screen match mode when object has canvas scaler enabled
             [HarmonyPatch(typeof(CanvasScaler), nameof(CanvasScaler.OnEnable))]
             [HarmonyPostfix]
@@ -144,18 +146,21 @@ namespace SH2Fix
             [HarmonyPostfix]
             public static void DisableLetterboxing(Game.UI.System.LetterBox __instance)
             {
-                LetterboxingUp = __instance.Up.gameObject;
-                LetterboxingDown = __instance.Down.gameObject; 
-                LetterboxingLeft = __instance.Left.gameObject;
-                LetterboxingRight = __instance.Right.gameObject;
+                if (!bLetterboxPatchHasRun)
+                {
+                    LetterboxingUp = __instance.Up.gameObject;
+                    LetterboxingDown = __instance.Down.gameObject;
+                    LetterboxingLeft = __instance.Left.gameObject;
+                    LetterboxingRight = __instance.Right.gameObject;
 
-                LetterboxingUp.gameObject.SetActive(false);
-                LetterboxingDown.gameObject.SetActive(false);
-                LetterboxingLeft.gameObject.SetActive(false);
-                LetterboxingRight.SetActive(false);
+                    LetterboxingUp.gameObject.SetActive(false);
+                    LetterboxingDown.gameObject.SetActive(false);
+                    LetterboxingLeft.gameObject.SetActive(false);
+                    LetterboxingRight.SetActive(false);
 
-                Log.LogInfo($"Disabled letterboxing.");
-                
+                    bLetterboxPatchHasRun = true;
+                    Log.LogInfo($"Disabled letterboxing.");
+                }
             }
         }
 
@@ -209,25 +214,26 @@ namespace SH2Fix
         public class FOVPatches
         {
            
-            // fov
+            // FOV Control
+            // Needs work before enabling
             [HarmonyPatch(typeof(VirtualCamera.RpVirtualCameraControl), nameof(VirtualCamera.RpVirtualCameraControl.SetActiveCamera))]
             [HarmonyPostfix]
-            public static void ass(VirtualCamera.RpVirtualCameraControl __instance, VirtualCamera.RpVirtualCamera __0)
+            public static void FOVAdjust(VirtualCamera.RpVirtualCameraControl __instance, VirtualCamera.RpVirtualCamera __0)
             {
                 float DefaultAspectRatio = (float)16 / 9;
                 float NewAspectRatio = (float)Screen.width / Screen.height; // This is only calculated on startup. Potential issue.
 
                 if (__0 != null)
                 {
-                    //Log.LogInfo($"Camera name = {__0.name}. Camera FOV = {__0.FieldOfView}");
-                    //float currFOV = __0.FieldOfView;
+                    Log.LogInfo($"Camera name = {__0.name}. Camera FOV = {__0.FieldOfView}");
+                    float currFOV = __0.FieldOfView;
+
                     // Vert+ FOV
                     if (NewAspectRatio < DefaultAspectRatio)
                     {
-                        //float newFOV = Mathf.Floor(Mathf.Atan(Mathf.Tan(currFOV * Mathf.PI / 360) / NewAspectRatio * DefaultAspectRatio) * 360 / Mathf.PI);
-                        //float newFOV = UnityEngine.Camera.HorizontalToVerticalFieldOfView(__0.FieldOfView, NewAspectRatio);
-                        //__instance.m_GameCamera.SetFov(newFOV);
-                        //Log.LogInfo($"Camera name = {__0.name}. New Camera FOV = {newFOV}");
+                        float newFOV = Mathf.Floor(Mathf.Atan(Mathf.Tan(currFOV * Mathf.PI / 360) / NewAspectRatio * DefaultAspectRatio) * 360 / Mathf.PI);
+                        __instance.m_GameCamera.SetFov(newFOV);
+                        Log.LogInfo($"Camera name = {__0.name}. New Camera FOV = {newFOV}");
                     }
                         
                 }
@@ -264,7 +270,7 @@ namespace SH2Fix
                     Log.LogInfo($"Custom resolution enabled. {(int)fDesiredResolutionX.Value}x{(int)fDesiredResolutionY.Value}. Window mode = {fullscreenMode}");
                     return true;
                 }
-                else { return true; }
+                return true;
             }
         }
     }
