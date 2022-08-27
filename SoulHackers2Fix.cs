@@ -26,10 +26,10 @@ namespace SH2Fix
         public static ConfigEntry<float> fRenderScale;
 
         // Custom Resolution
-        //public static ConfigEntry<bool> bCustomResolution;
-        //public static ConfigEntry<float> fDesiredResolutionX;
-        //public static ConfigEntry<float> fDesiredResolutionY;
-        //public static ConfigEntry<int> iWindowMode;
+        public static ConfigEntry<bool> bCustomResolution;
+        public static ConfigEntry<float> fDesiredResolutionX;
+        public static ConfigEntry<float> fDesiredResolutionY;
+        public static ConfigEntry<int> iWindowMode;
 
         public override void Load()
         {
@@ -56,26 +56,26 @@ namespace SH2Fix
                                 //new AcceptableValueRange<float>(0f, 180f)));
 
             // Custom Resolution
-            //bCustomResolution = Config.Bind("Set Custom Resolution",
-                                //"CustomResolution",
-                                //false, // Disable by default as launcher should suffice.
-                                //"Set to true to enable the custom resolution below.");
+            bCustomResolution = Config.Bind("Set Custom Resolution",
+                                "CustomResolution",
+                                false, // Disable by default as launcher should suffice.
+                                "Set to true to enable the custom resolution below.");
 
-            //fDesiredResolutionX = Config.Bind("Set Custom Resolution",
-                                //"ResolutionWidth",
-                                //(float)Display.main.systemWidth, // Set default to display width so we don't leave an unsupported resolution as default.
-                                //"Set desired resolution width.");
+            fDesiredResolutionX = Config.Bind("Set Custom Resolution",
+                                "ResolutionWidth",
+                                (float)Display.main.systemWidth, // Set default to display width so we don't leave an unsupported resolution as default.
+                                "Set desired resolution width.");
 
-            //fDesiredResolutionY = Config.Bind("Set Custom Resolution",
-                                //"ResolutionHeight",
-                                //(float)Display.main.systemHeight, // Set default to display height so we don't leave an unsupported resolution as default.
-                                //"Set desired resolution height.");
+            fDesiredResolutionY = Config.Bind("Set Custom Resolution",
+                                "ResolutionHeight",
+                                (float)Display.main.systemHeight, // Set default to display height so we don't leave an unsupported resolution as default.
+                                "Set desired resolution height.");
 
-            //iWindowMode = Config.Bind("Set Custom Resolution",
-                                //"WindowMode",
-                                //(int)1,
-                                //new ConfigDescription("Set window mode. 1 = Exclusive Fullscreen, 2 = Fullscreen Windowed, 3 = Maximized Window, 4 = Windowed.",
-                                //new AcceptableValueRange<int>(1, 4)));
+            iWindowMode = Config.Bind("Set Custom Resolution",
+                                "WindowMode",
+                                (int)1,
+                                new ConfigDescription("Set window mode. 1 = Exclusive Fullscreen, 2 = Fullscreen Windowed, 3 = Maximized Window, 4 = Windowed.",
+                                new AcceptableValueRange<int>(1, 4)));
 
             // Graphical Settings
             iAnisotropicFiltering = Config.Bind("Graphical Tweaks",
@@ -103,10 +103,10 @@ namespace SH2Fix
             }
 
             // Run CustomResolutionPatches
-            //if (bCustomResolution.Value)
-            //{
-                //Harmony.CreateAndPatchAll(typeof(CustomResolutionPatches));
-            //}
+            if (bCustomResolution.Value)
+            {
+                Harmony.CreateAndPatchAll(typeof(CustomResolutionPatches));
+            }
 
             // Run FOVPatches
             //if (bFOVAdjust.Value)
@@ -208,6 +208,8 @@ namespace SH2Fix
                 //Log.LogInfo($"URP m_MSAA = {UniversalRenderPipeline.asset.m_MSAA}");
                 //UniversalRenderPipeline.asset.m_MSAA = MsaaQuality._8x;
 
+                Screen.SetResolution((int)fDesiredResolutionX.Value, (int)fDesiredResolutionY.Value, false);
+
                 Log.LogInfo("Applied custom settings.");
             }
         }
@@ -264,15 +266,32 @@ namespace SH2Fix
                         _ => UnityEngine.FullScreenMode.ExclusiveFullScreen,
                     };
 
-                    Log.LogInfo($"Previous resolution = {__0}x{__1}. Window mode = {__2}");
+                    Log.LogInfo($"1st: Old: Set resolution = {__0}x{__1}. Window mode = {__2}");
                     __0 = (int)fDesiredResolutionX.Value;
                     __1 = (int)fDesiredResolutionY.Value;
                     __2 = fullscreenMode;
                     
-                    Log.LogInfo($"Custom resolution enabled. {(int)fDesiredResolutionX.Value}x{(int)fDesiredResolutionY.Value}. Window mode = {fullscreenMode}");
+                    Log.LogInfo($"1st: New: Set resolution = {(int)fDesiredResolutionX.Value}x{(int)fDesiredResolutionY.Value}. Window mode = {fullscreenMode}");
                     return true;
                 }
+                // Don't change anything if resolution is set to 0 on any axis
                 return true;
+            }
+
+            [HarmonyPatch(typeof(Game.Common.ConfigSystem2SaveData), nameof(Game.Common.ConfigSystem2SaveData.SetResolutionInfo))]
+            [HarmonyPatch(typeof(Game.Common.ConfigCtrl), nameof(Game.Common.ConfigCtrl.SetResolutionInfo))]
+            [HarmonyPatch(typeof(Game.Common.ConfigCtrl), nameof(Game.Common.ConfigCtrl.setScreenMode))]
+            [HarmonyPatch(typeof(Game.Common.ConfigCtrl._moveExclusiveFullScreenDisplay_d__106), nameof(Game.Common.ConfigCtrl._moveExclusiveFullScreenDisplay_d__106.MoveNext))]
+            [HarmonyPatch(typeof(Game.Common.ConfigCtrl), nameof(Game.Common.ConfigCtrl.moveExclusiveFullScreenDisplay))]
+            [HarmonyPrefix]
+            public static bool SkipRes()
+            {
+                if (fDesiredResolutionX.Value > 0 && fDesiredResolutionY.Value > 0)
+                {
+                    Log.LogInfo("Returned false on Game.Common.ConfigCtrl._moveExclusiveFullScreenDisplay_d__106.MoveNext");
+                    return false;
+                }
+                return false;
             }
         }
     }
