@@ -29,7 +29,7 @@ Please report any issues you see.
 - Resolution on startup is rather buggy and seems to change by itself. I am looking into this.
 
 ## Screenshots
-|  |
+| ![ezgif-5-8c9e6fffc1](https://user-images.githubusercontent.com/695941/187015446-42c19f43-c3e6-48f6-811f-f0fb120deedb.gif) |
 |:--:|
 | Ultrawide pillarbox removal. | 
 
