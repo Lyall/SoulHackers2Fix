@@ -26,10 +26,10 @@ namespace SH2Fix
         public static ConfigEntry<float> fRenderScale;
 
         // Custom Resolution
-        public static ConfigEntry<bool> bCustomResolution;
-        public static ConfigEntry<float> fDesiredResolutionX;
-        public static ConfigEntry<float> fDesiredResolutionY;
-        public static ConfigEntry<int> iWindowMode;
+        //public static ConfigEntry<bool> bCustomResolution;
+        //public static ConfigEntry<float> fDesiredResolutionX;
+        //public static ConfigEntry<float> fDesiredResolutionY;
+        //public static ConfigEntry<int> iWindowMode;
 
         public override void Load()
         {
@@ -101,11 +101,13 @@ namespace SH2Fix
             {
                 Harmony.CreateAndPatchAll(typeof(UltrawidePatches));
             }
+
             // Run CustomResolutionPatches
-            //if (bCustomResolution.Value)
-            //{
-                //Harmony.CreateAndPatchAll(typeof(CustomResolutionPatches));
-            //}
+            if (bCustomResolution.Value)
+            {
+                Harmony.CreateAndPatchAll(typeof(CustomResolutionPatches));
+            }
+
             // Run FOVPatches
             //if (bFOVAdjust.Value)
             //{
