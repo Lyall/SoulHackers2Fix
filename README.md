@@ -26,8 +26,7 @@ This WIP BepInEx plugin for the game Soul Hackers 2 features:
 
 ## Known Issues
 Please report any issues you see.
-
-- Run into issues after updating the mod? Try deleting your config file, then booting the game to generate a new one.
+- Resolution on startup is rather buggy and seems to change by itself. I am looking into this.
 
 ## Screenshots
 |  |
