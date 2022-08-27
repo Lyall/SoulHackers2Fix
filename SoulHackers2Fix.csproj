@@ -32,6 +32,9 @@
     <Reference Include="UnhollowerBaseLib">
       <HintPath>libs\UnhollowerBaseLib.stripped.dll</HintPath>
     </Reference>
+    <Reference Include="Unity.RenderPipelines.Universal.Runtime">
+      <HintPath>libs\Unity.RenderPipelines.Universal.Runtime.stripped.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>libs\UnityEngine.CoreModule.stripped.dll</HintPath>
     </Reference>

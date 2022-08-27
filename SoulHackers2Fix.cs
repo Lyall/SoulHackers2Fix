@@ -4,7 +4,9 @@ using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
 
 using HarmonyLib;
+using System;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
 
 namespace SH2Fix
@@ -15,10 +17,15 @@ namespace SH2Fix
         internal static new ManualLogSource Log;
 
         public static ConfigEntry<bool> bUltrawideFixes;
-        public static ConfigEntry<bool> bIntroSkip;
         public static ConfigEntry<bool> bFOVAdjust;
         public static ConfigEntry<float> fAdditionalFOV;
-        public static ConfigEntry<float> fUpdateRate;
+
+        // Graphics
+        public static ConfigEntry<int> iAnisotropicFiltering;
+        public static ConfigEntry<float> fLODBias;
+        public static ConfigEntry<float> fRenderScale;
+
+        // Custom Resolution
         public static ConfigEntry<bool> bCustomResolution;
         public static ConfigEntry<float> fDesiredResolutionX;
         public static ConfigEntry<float> fDesiredResolutionY;
@@ -36,21 +43,10 @@ namespace SH2Fix
                                 true,
                                 "Set to true to enable ultrawide UI fixes.");
 
-            fUpdateRate = Config.Bind("General",
-                                "PhysicsUpdateRate",
-                                (float)0f, // 0 = Auto (Set to refresh rate) || Default = 50
-                                new ConfigDescription("Set desired update rate. This will improve camera smoothness in particular. \n0 = Auto (Set to refresh rate). Game default = 50",
-                                new AcceptableValueRange<float>(0f, 5000f)));
-
-            bIntroSkip = Config.Bind("General",
-                                "IntroSkip",
-                                 true,
-                                "Skip intro logos.");
-
             // Game Overrides
             bFOVAdjust = Config.Bind("FOV Adjustment",
                                 "FOVAdjustment",
-                                true, // True by default to enable Vert+ for narrow aspect ratios.
+                                false, // True by default to enable Vert+ for narrow aspect ratios.
                                 "Set to true to enable adjustment of the FOV. \nIt will also adjust the FOV to be Vert+ if your aspect ratio is narrower than 16:9.");
 
             fAdditionalFOV = Config.Bind("FOV Adjustment",
@@ -78,15 +74,45 @@ namespace SH2Fix
             iWindowMode = Config.Bind("Set Custom Resolution",
                                 "WindowMode",
                                  (int)1,
-                                new ConfigDescription("Set window mode. 1 = Fullscreen, 2 = Borderless, 3 = Windowed.",
-                                new AcceptableValueRange<int>(1, 3)));
+                                new ConfigDescription("Set window mode. 1 = Exclusive Fullscreen, 2 = Fullscreen Windowed, 3 = Maximized Window, 4 = Windowed.",
+                                new AcceptableValueRange<int>(1, 4)));
+
+            // Graphical Settings
+            iAnisotropicFiltering = Config.Bind("Graphical Tweaks",
+                                "AnisotropicFiltering.Value",
+                                (int)16,
+                                new ConfigDescription("Set Anisotropic Filtering level. Higher values improve clarity of textures at oblique angles.",
+                                new AcceptableValueRange<int>(1, 16)));
+
+            fLODBias = Config.Bind("Graphical Tweaks",
+                                "LODBias.Value",
+                                (float)1.5f, // Default = 1.5f
+                                new ConfigDescription("Set LOD Bias. Controls distance for level of detail switching.",
+                                new AcceptableValueRange<float>(0.1f, 10f)));
+
+            fRenderScale = Config.Bind("Graphical Tweaks",
+                                "RenderScale.Value",
+                                (float)100f, // Default = 100
+                                new ConfigDescription("Set Render Scale. Setting higher than 100 provides downsampling for much improved anti-aliasing.",
+                                new AcceptableValueRange<float>(10f, 400f)));
 
             // Run UltrawidePatches
             if (bUltrawideFixes.Value)
             {
                 Harmony.CreateAndPatchAll(typeof(UltrawidePatches));
             }
+            // Run CustomResolutionPatches
+            if (bCustomResolution.Value)
+            {
+                Harmony.CreateAndPatchAll(typeof(CustomResolutionPatches));
+            }
+            // Run FOVPatches
+            if (bFOVAdjust.Value)
+            {
+                Harmony.CreateAndPatchAll(typeof(FOVPatches));
+            }
 
+            Harmony.CreateAndPatchAll(typeof(MiscellaneousPatches));
         }
 
         [HarmonyPatch]
@@ -103,7 +129,7 @@ namespace SH2Fix
             public static GameObject LetterboxingRight;
 
             // Set screen match mode when object has canvas scaler enabled
-            [HarmonyPatch(typeof(CanvasScaler), "OnEnable")]
+            [HarmonyPatch(typeof(CanvasScaler), nameof(CanvasScaler.OnEnable))]
             [HarmonyPostfix]
             public static void SetScreenMatchMode(CanvasScaler __instance)
             {
@@ -130,6 +156,123 @@ namespace SH2Fix
 
                 Log.LogInfo($"Disabled letterboxing.");
                 
+            }
+        }
+
+        [HarmonyPatch]
+        public class MiscellaneousPatches
+        {
+            // Apply custom resolution
+            [HarmonyPatch(typeof(Game.Common.ConfigCtrl), nameof(Game.Common.ConfigCtrl.ApplyGraphicsSettings))]
+            [HarmonyPostfix]
+            public static void PostApplyGraphicsSettings()
+            {
+                var saveData = Game.Common.ConfigCtrl.s_ConfigData;
+
+                // Anisotropic Filtering
+                if (iAnisotropicFiltering.Value > 0)
+                {
+                    Log.LogInfo($"Old: Anisotropic filtering = {QualitySettings.anisotropicFiltering}");
+                    QualitySettings.anisotropicFiltering = AnisotropicFiltering.ForceEnable;
+                    Texture.SetGlobalAnisotropicFilteringLimits(iAnisotropicFiltering.Value, iAnisotropicFiltering.Value);
+                    Log.LogInfo($"New: Anisotropic filtering = {QualitySettings.anisotropicFiltering}. Value = {iAnisotropicFiltering.Value}");
+                }
+
+                // Render Scale
+                if (fRenderScale.Value > 9f)
+                {
+                    Log.LogInfo($"Old: Game RenderScale = {Game.Common.ConfigCtrl.GetRenderScale()}. URP m_RenderScale = {UniversalRenderPipeline.asset.m_RenderScale}");
+                    Game.Common.ConfigCtrl.SetRenderScale((int)fRenderScale.Value);
+                    UniversalRenderPipeline.asset.m_RenderScale = fRenderScale.Value / 100;
+                    Log.LogInfo($"New: Game RenderScale = {Game.Common.ConfigCtrl.GetRenderScale()}. URP m_RenderScale = {UniversalRenderPipeline.asset.m_RenderScale}");
+                }
+
+                // LOD Bias
+                if (fLODBias.Value >= 0.1f)
+                {
+                    Log.LogInfo($"Old: LODBias set to {fLODBias.Value}");
+                    QualitySettings.lodBias = fLODBias.Value; // Default = 1.5f    
+                    Log.LogInfo($"New: LODBias set to {fLODBias.Value}");
+                }
+
+                // MSAA is broken, results in messed up graphics.
+                //Log.LogInfo($"antiAliasing = {QualitySettings.antiAliasing}");
+                //QualitySettings.antiAliasing = 8;
+                //Log.LogInfo($"URP m_MSAA = {UniversalRenderPipeline.asset.m_MSAA}");
+                //UniversalRenderPipeline.asset.m_MSAA = MsaaQuality._8x;
+
+                Log.LogInfo("Applied custom settings.");
+            }
+        }
+
+        [HarmonyPatch]
+        public class FOVPatches
+        {
+            // fov
+            [HarmonyPatch(typeof(VirtualCamera.RpVirtualCameraControl), nameof(VirtualCamera.RpVirtualCameraControl.SetActiveCamera))]
+            [HarmonyPostfix]
+            public static void ReadFOV(VirtualCamera.RpVirtualCameraControl __instance, VirtualCamera.RpVirtualCamera __0)
+            {
+                float DefaultAspectRatio = (float)16 / 9;
+                float NewAspectRatio = (float)Screen.width / Screen.height; // This is only calculated on startup. Potential issue.
+
+                if (__0 != null)
+                {
+                    Log.LogInfo($"Camera name = {__0.name}. Camera FOV = {__0.FieldOfView}");
+                    float currFOV = __0.FieldOfView;
+                    // Vert+ FOV
+                    if (NewAspectRatio < DefaultAspectRatio)
+                    {
+                        //float newFOV = Mathf.Floor(Mathf.Atan(Mathf.Tan(currFOV * Mathf.PI / 360) / NewAspectRatio * DefaultAspectRatio) * 360 / Mathf.PI);
+                        float newFOV = UnityEngine.Camera.HorizontalToVerticalFieldOfView(__0.FieldOfView, NewAspectRatio);
+                        //__0.m_Camera.fieldOfView = newFOV;
+                        
+                        Log.LogInfo($"Camera name = {__0.name}. New Camera FOV = {newFOV}");
+                    }
+                        
+                }
+                
+            }
+
+            // fov2
+            [HarmonyPatch(typeof(Battle.CameraLayoutData), MethodType.Constructor)]
+            [HarmonyPostfix]
+            public static void ctorFOV(Battle.CameraLayoutData __instance)
+            {
+                __instance.m_Fov = 90f;
+            }
+        }
+
+        [HarmonyPatch]
+        public class CustomResolutionPatches
+        {
+            // THIS SHOULD BE WORKING BUT IT AIN'T!
+
+            // Apply custom resolution
+            [HarmonyPatch(typeof(Screen), nameof(Screen.SetResolution), new Type[] { typeof(int), typeof(int), typeof(UnityEngine.FullScreenMode) })]
+            [HarmonyPrefix]
+            public static bool ApplyCustomResolution(ref int __0, ref int __1, ref UnityEngine.FullScreenMode __2)
+            {
+                if (fDesiredResolutionX.Value > 0 && fDesiredResolutionY.Value > 0)
+                {
+                    var fullscreenMode = iWindowMode.Value switch
+                    {
+                        1 => UnityEngine.FullScreenMode.ExclusiveFullScreen,
+                        2 => UnityEngine.FullScreenMode.FullScreenWindow,
+                        3 => UnityEngine.FullScreenMode.MaximizedWindow,
+                        4 => UnityEngine.FullScreenMode.Windowed,
+                        _ => UnityEngine.FullScreenMode.ExclusiveFullScreen,
+                    };
+
+                    Log.LogInfo($"Previous resolution = {__0}x{__1}. Window mode = {__2}");
+                    __0 = (int)fDesiredResolutionX.Value;
+                    __1 = (int)fDesiredResolutionY.Value;
+                    __2 = fullscreenMode;
+                    
+                    Log.LogInfo($"Custom resolution enabled. {(int)fDesiredResolutionX.Value}x{(int)fDesiredResolutionY.Value}. Window mode = {fullscreenMode}");
+                    return true;
+                }
+                else { return true; }
             }
         }
     }
