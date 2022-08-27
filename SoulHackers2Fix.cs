@@ -19,6 +19,7 @@ namespace SH2Fix
         public static ConfigEntry<bool> bUltrawideFixes;
         public static ConfigEntry<bool> bFOVAdjust;
         public static ConfigEntry<float> fAdditionalFOV;
+        //public static ConfigEntry<float> fUpdateRate;
 
         // Graphics
         public static ConfigEntry<int> iAnisotropicFiltering;
@@ -43,10 +44,10 @@ namespace SH2Fix
                                 true,
                                 "Set to true to enable ultrawide UI fixes.");
 
-            // FOV
+            // Game Overrides
             //bFOVAdjust = Config.Bind("FOV Adjustment",
                                 //"FOVAdjustment",
-                                //false, // True by default to enable Vert+ for narrow aspect ratios.
+                                //true, // True by default to enable Vert+ for narrow aspect ratios.
                                 //"Set to true to enable adjustment of the FOV. \nIt will also adjust the FOV to be Vert+ if your aspect ratio is narrower than 16:9.");
 
             //fAdditionalFOV = Config.Bind("FOV Adjustment",
@@ -107,10 +108,10 @@ namespace SH2Fix
                 Harmony.CreateAndPatchAll(typeof(CustomResolutionPatches));
             }
             // Run FOVPatches
-            if (bFOVAdjust.Value)
-            {
-                Harmony.CreateAndPatchAll(typeof(FOVPatches));
-            }
+            //if (bFOVAdjust.Value)
+            //{
+                //Harmony.CreateAndPatchAll(typeof(FOVPatches));
+            //}
 
             Harmony.CreateAndPatchAll(typeof(MiscellaneousPatches));
         }
@@ -208,37 +209,30 @@ namespace SH2Fix
         [HarmonyPatch]
         public class FOVPatches
         {
+           
             // fov
             [HarmonyPatch(typeof(VirtualCamera.RpVirtualCameraControl), nameof(VirtualCamera.RpVirtualCameraControl.SetActiveCamera))]
             [HarmonyPostfix]
-            public static void ReadFOV(VirtualCamera.RpVirtualCameraControl __instance, VirtualCamera.RpVirtualCamera __0)
+            public static void ass(VirtualCamera.RpVirtualCameraControl __instance, VirtualCamera.RpVirtualCamera __0)
             {
                 float DefaultAspectRatio = (float)16 / 9;
                 float NewAspectRatio = (float)Screen.width / Screen.height; // This is only calculated on startup. Potential issue.
 
                 if (__0 != null)
                 {
-                    Log.LogInfo($"Camera name = {__0.name}. Camera FOV = {__0.FieldOfView}");
-                    float currFOV = __0.FieldOfView;
+                    //Log.LogInfo($"Camera name = {__0.name}. Camera FOV = {__0.FieldOfView}");
+                    //float currFOV = __0.FieldOfView;
                     // Vert+ FOV
                     if (NewAspectRatio < DefaultAspectRatio)
                     {
-                        float newFOV = Mathf.Floor(Mathf.Atan(Mathf.Tan(currFOV * Mathf.PI / 360) / NewAspectRatio * DefaultAspectRatio) * 360 / Mathf.PI);
-                        //__0.m_Camera.fieldOfView = newFOV;
-                        
-                        Log.LogInfo($"Camera name = {__0.name}. New Camera FOV = {newFOV}");
+                        //float newFOV = Mathf.Floor(Mathf.Atan(Mathf.Tan(currFOV * Mathf.PI / 360) / NewAspectRatio * DefaultAspectRatio) * 360 / Mathf.PI);
+                        //float newFOV = UnityEngine.Camera.HorizontalToVerticalFieldOfView(__0.FieldOfView, NewAspectRatio);
+                        //__instance.m_GameCamera.SetFov(newFOV);
+                        //Log.LogInfo($"Camera name = {__0.name}. New Camera FOV = {newFOV}");
                     }
                         
                 }
                 
-            }
-
-            // fov2
-            [HarmonyPatch(typeof(Battle.CameraLayoutData), MethodType.Constructor)]
-            [HarmonyPostfix]
-            public static void ctorFOV(Battle.CameraLayoutData __instance)
-            {
-                __instance.m_Fov = 90f;
             }
         }
 
