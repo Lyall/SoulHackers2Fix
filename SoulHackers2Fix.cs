@@ -43,17 +43,17 @@ namespace SH2Fix
                                 true,
                                 "Set to true to enable ultrawide UI fixes.");
 
-            // Game Overrides
-            bFOVAdjust = Config.Bind("FOV Adjustment",
-                                "FOVAdjustment",
-                                false, // True by default to enable Vert+ for narrow aspect ratios.
-                                "Set to true to enable adjustment of the FOV. \nIt will also adjust the FOV to be Vert+ if your aspect ratio is narrower than 16:9.");
+            // FOV
+            //bFOVAdjust = Config.Bind("FOV Adjustment",
+                                //"FOVAdjustment",
+                                //false, // True by default to enable Vert+ for narrow aspect ratios.
+                                //"Set to true to enable adjustment of the FOV. \nIt will also adjust the FOV to be Vert+ if your aspect ratio is narrower than 16:9.");
 
-            fAdditionalFOV = Config.Bind("FOV Adjustment",
-                                "AdditionalFOV.Value",
-                                (float)0f,
-                                new ConfigDescription("Set additional FOV in degrees. This does not adjust FOV in cutscenes.",
-                                new AcceptableValueRange<float>(0f, 180f)));
+            //fAdditionalFOV = Config.Bind("FOV Adjustment",
+                                //"AdditionalFOV.Value",
+                                //(float)0f,
+                                //new ConfigDescription("Set additional FOV in degrees. This does not adjust FOV in cutscenes.",
+                                //new AcceptableValueRange<float>(0f, 180f)));
 
             // Custom Resolution
             bCustomResolution = Config.Bind("Set Custom Resolution",
@@ -223,8 +223,7 @@ namespace SH2Fix
                     // Vert+ FOV
                     if (NewAspectRatio < DefaultAspectRatio)
                     {
-                        //float newFOV = Mathf.Floor(Mathf.Atan(Mathf.Tan(currFOV * Mathf.PI / 360) / NewAspectRatio * DefaultAspectRatio) * 360 / Mathf.PI);
-                        float newFOV = UnityEngine.Camera.HorizontalToVerticalFieldOfView(__0.FieldOfView, NewAspectRatio);
+                        float newFOV = Mathf.Floor(Mathf.Atan(Mathf.Tan(currFOV * Mathf.PI / 360) / NewAspectRatio * DefaultAspectRatio) * 360 / Mathf.PI);
                         //__0.m_Camera.fieldOfView = newFOV;
                         
                         Log.LogInfo($"Camera name = {__0.name}. New Camera FOV = {newFOV}");
