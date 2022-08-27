@@ -103,10 +103,10 @@ namespace SH2Fix
             }
 
             // Run CustomResolutionPatches
-            if (bCustomResolution.Value)
-            {
-                Harmony.CreateAndPatchAll(typeof(CustomResolutionPatches));
-            }
+            //if (bCustomResolution.Value)
+            //{
+                //Harmony.CreateAndPatchAll(typeof(CustomResolutionPatches));
+            //}
 
             // Run FOVPatches
             //if (bFOVAdjust.Value)
