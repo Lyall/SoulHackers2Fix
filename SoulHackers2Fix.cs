@@ -19,7 +19,6 @@ namespace SH2Fix
         public static ConfigEntry<bool> bUltrawideFixes;
         public static ConfigEntry<bool> bFOVAdjust;
         public static ConfigEntry<float> fAdditionalFOV;
-        //public static ConfigEntry<float> fUpdateRate;
 
         // Graphics
         public static ConfigEntry<int> iAnisotropicFiltering;
