@@ -74,7 +74,7 @@ namespace SH2Fix
 
             iWindowMode = Config.Bind("Set Custom Resolution",
                                 "WindowMode",
-                                (int)1,
+                                (int)2,
                                 new ConfigDescription("Set window mode. 1 = Exclusive Fullscreen, 2 = Fullscreen Windowed, 3 = Maximized Window, 4 = Windowed.",
                                 new AcceptableValueRange<int>(1, 4)));
 
@@ -264,7 +264,7 @@ namespace SH2Fix
                         2 => UnityEngine.FullScreenMode.FullScreenWindow,
                         3 => UnityEngine.FullScreenMode.MaximizedWindow,
                         4 => UnityEngine.FullScreenMode.Windowed,
-                        _ => UnityEngine.FullScreenMode.ExclusiveFullScreen,
+                        _ => UnityEngine.FullScreenMode.FullScreenWindow,
                     };
 
                     Log.LogInfo($"Old: Set resolution = {__0}x{__1}. Window mode = {__2}");
