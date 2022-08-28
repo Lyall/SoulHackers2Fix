@@ -30,6 +30,7 @@ namespace SH2Fix
         public static ConfigEntry<float> fDesiredResolutionX;
         public static ConfigEntry<float> fDesiredResolutionY;
         public static ConfigEntry<int> iWindowMode;
+        public static ConfigEntry<int> iMonitorIndex;
 
         public override void Load()
         {
@@ -58,7 +59,7 @@ namespace SH2Fix
             // Custom Resolution
             bCustomResolution = Config.Bind("Set Custom Resolution",
                                 "CustomResolution",
-                                false, // Disable by default as launcher should suffice.
+                                true, // Enabled by default to fix the janky startup resolution.
                                 "Set to true to enable the custom resolution below.");
 
             fDesiredResolutionX = Config.Bind("Set Custom Resolution",
@@ -76,6 +77,12 @@ namespace SH2Fix
                                 (int)1,
                                 new ConfigDescription("Set window mode. 1 = Exclusive Fullscreen, 2 = Fullscreen Windowed, 3 = Maximized Window, 4 = Windowed.",
                                 new AcceptableValueRange<int>(1, 4)));
+
+            iMonitorIndex = Config.Bind("Set Custom Resolution",
+                                "DisplayNumber",
+                                (int)0,
+                                new ConfigDescription("Set display number. Let's you change which monitor the game is displayed on.",
+                                new AcceptableValueRange<int>(0, 8)));
 
             // Graphical Settings
             iAnisotropicFiltering = Config.Bind("Graphical Tweaks",
@@ -174,8 +181,6 @@ namespace SH2Fix
             [HarmonyPostfix]
             public static void PostApplyGraphicsSettings()
             {
-                var saveData = Game.Common.ConfigCtrl.s_ConfigData;
-
                 // Anisotropic Filtering
                 if (iAnisotropicFiltering.Value > 0)
                 {
@@ -207,8 +212,6 @@ namespace SH2Fix
                 //QualitySettings.antiAliasing = 8;
                 //Log.LogInfo($"URP m_MSAA = {UniversalRenderPipeline.asset.m_MSAA}");
                 //UniversalRenderPipeline.asset.m_MSAA = MsaaQuality._8x;
-
-                Screen.SetResolution((int)fDesiredResolutionX.Value, (int)fDesiredResolutionY.Value, false);
 
                 Log.LogInfo("Applied custom settings.");
             }
@@ -248,8 +251,6 @@ namespace SH2Fix
         [HarmonyPatch]
         public class CustomResolutionPatches
         {
-            // THIS SHOULD BE WORKING BUT IT AIN'T!
-
             // Apply custom resolution
             [HarmonyPatch(typeof(Screen), nameof(Screen.SetResolution), new Type[] { typeof(int), typeof(int), typeof(UnityEngine.FullScreenMode) })]
             [HarmonyPrefix]
@@ -266,32 +267,29 @@ namespace SH2Fix
                         _ => UnityEngine.FullScreenMode.ExclusiveFullScreen,
                     };
 
-                    Log.LogInfo($"1st: Old: Set resolution = {__0}x{__1}. Window mode = {__2}");
+                    Log.LogInfo($"Old: Set resolution = {__0}x{__1}. Window mode = {__2}");
                     __0 = (int)fDesiredResolutionX.Value;
                     __1 = (int)fDesiredResolutionY.Value;
                     __2 = fullscreenMode;
-                    
-                    Log.LogInfo($"1st: New: Set resolution = {(int)fDesiredResolutionX.Value}x{(int)fDesiredResolutionY.Value}. Window mode = {fullscreenMode}");
+
+                    Log.LogInfo($"New: Set resolution = {(int)fDesiredResolutionX.Value}x{(int)fDesiredResolutionY.Value}. Window mode = {fullscreenMode}");
                     return true;
                 }
                 // Don't change anything if resolution is set to 0 on any axis
                 return true;
             }
 
-            [HarmonyPatch(typeof(Game.Common.ConfigSystem2SaveData), nameof(Game.Common.ConfigSystem2SaveData.SetResolutionInfo))]
-            [HarmonyPatch(typeof(Game.Common.ConfigCtrl), nameof(Game.Common.ConfigCtrl.SetResolutionInfo))]
-            [HarmonyPatch(typeof(Game.Common.ConfigCtrl), nameof(Game.Common.ConfigCtrl.setScreenMode))]
-            [HarmonyPatch(typeof(Game.Common.ConfigCtrl._moveExclusiveFullScreenDisplay_d__106), nameof(Game.Common.ConfigCtrl._moveExclusiveFullScreenDisplay_d__106.MoveNext))]
-            [HarmonyPatch(typeof(Game.Common.ConfigCtrl), nameof(Game.Common.ConfigCtrl.moveExclusiveFullScreenDisplay))]
-            [HarmonyPrefix]
-            public static bool SkipRes()
+            // Override monitor capabilities.
+            // I honestly don't know exactly what the fuck kind of weird shit they are doing with this, but overriding it fixes custom resolutions.
+            [HarmonyPatch(typeof(RedPencil.Artdink.MonitorUtility), nameof(RedPencil.Artdink.MonitorUtility.GetMonitorResolution))]
+            [HarmonyPostfix]
+            public static void Fart(ref int __0, ref int __1, ref int __2)
             {
-                if (fDesiredResolutionX.Value > 0 && fDesiredResolutionY.Value > 0)
-                {
-                    Log.LogInfo("Returned false on Game.Common.ConfigCtrl._moveExclusiveFullScreenDisplay_d__106.MoveNext");
-                    return false;
-                }
-                return false;
+                Log.LogInfo($"Old: Artdink.MonitoryUtility | Monitor Index: {__0}, Width: {__1}, Height: {__2}");
+                __0 = iMonitorIndex.Value;
+                __1 = (int)fDesiredResolutionX.Value;
+                __2 = (int)fDesiredResolutionY.Value;
+                Log.LogInfo($"New: Artdink.MonitoryUtility | Monitor Index: {__0}, Width: {__1}, Height: {__2}");
             }
         }
     }
