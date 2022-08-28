@@ -30,7 +30,7 @@ namespace SH2Fix
         public static ConfigEntry<float> fDesiredResolutionX;
         public static ConfigEntry<float> fDesiredResolutionY;
         public static ConfigEntry<int> iWindowMode;
-        public static ConfigEntry<int> iMonitorIndex;
+        //public static ConfigEntry<int> iMonitorIndex;
 
         public override void Load()
         {
@@ -78,11 +78,11 @@ namespace SH2Fix
                                 new ConfigDescription("Set window mode. 1 = Exclusive Fullscreen, 2 = Fullscreen Windowed, 3 = Maximized Window, 4 = Windowed.",
                                 new AcceptableValueRange<int>(1, 4)));
 
-            iMonitorIndex = Config.Bind("Set Custom Resolution",
-                                "DisplayNumber",
-                                (int)0,
-                                new ConfigDescription("Set display number. Let's you change which monitor the game is displayed on.",
-                                new AcceptableValueRange<int>(0, 8)));
+            //iMonitorIndex = Config.Bind("Set Custom Resolution",
+                                //"DisplayNumber",
+                                //(int)0,
+                                //new ConfigDescription("Set display number. Let's you change which monitor the game is displayed on.",
+                                //new AcceptableValueRange<int>(0, 8)));
 
             // Graphical Settings
             iAnisotropicFiltering = Config.Bind("Graphical Tweaks",
@@ -283,10 +283,10 @@ namespace SH2Fix
             // I honestly don't know exactly what the fuck kind of weird shit they are doing with this, but overriding it fixes custom resolutions.
             [HarmonyPatch(typeof(RedPencil.Artdink.MonitorUtility), nameof(RedPencil.Artdink.MonitorUtility.GetMonitorResolution))]
             [HarmonyPostfix]
-            public static void Fart(ref int __0, ref int __1, ref int __2)
+            public static void ChangeReportedMonitorResolution(ref int __0, ref int __1, ref int __2)
             {
                 Log.LogInfo($"Old: Artdink.MonitoryUtility | Monitor Index: {__0}, Width: {__1}, Height: {__2}");
-                __0 = iMonitorIndex.Value;
+                //__0 = iMonitorIndex.Value;
                 __1 = (int)fDesiredResolutionX.Value;
                 __2 = (int)fDesiredResolutionY.Value;
                 Log.LogInfo($"New: Artdink.MonitoryUtility | Monitor Index: {__0}, Width: {__1}, Height: {__2}");
