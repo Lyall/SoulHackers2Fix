@@ -4,15 +4,11 @@ using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
 
 using HarmonyLib;
-using Il2CppInterop.Runtime;
 using System;
-using System.Collections.Generic;
+
 using UnityEngine;
-using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement;
-using AtLib.AtGraphics.AtImageEffect;
 
 namespace SH2Fix
 {
@@ -23,6 +19,7 @@ namespace SH2Fix
 
         // Features
         public static ConfigEntry<bool> bUltrawideFixes;
+        public static ConfigEntry<bool> bMovementFix;
 
         // Graphics
         public static ConfigEntry<int> iAnisotropicFiltering;
@@ -34,7 +31,6 @@ namespace SH2Fix
         public static ConfigEntry<float> fDesiredResolutionX;
         public static ConfigEntry<float> fDesiredResolutionY;
         public static ConfigEntry<int> iWindowMode;
-        //public static ConfigEntry<int> iMonitorIndex;
 
         public override void Load()
         {
@@ -43,10 +39,14 @@ namespace SH2Fix
             Log.LogInfo($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded!");
 
             // Features
-            bUltrawideFixes = Config.Bind("Ultrawide UI Fixes",
+            bUltrawideFixes = Config.Bind("General",
                                 "UltrawideFixes",
                                 true,
                                 "Set to true to enable ultrawide UI fixes.");
+            bMovementFix = Config.Bind("General",
+                                "MovementFix",
+                                true,
+                                "Set to true to fix slidey movement on Ringo. It uses your refresh rate to calculate a new blend time for the movement animation.");
 
             // Graphics
             iAnisotropicFiltering = Config.Bind("Graphical Tweaks",
@@ -89,12 +89,6 @@ namespace SH2Fix
                                 new ConfigDescription("Set window mode. 1 = Exclusive Fullscreen, 2 = Fullscreen Windowed, 3 = Maximized Window, 4 = Windowed.",
                                 new AcceptableValueRange<int>(1, 4)));
 
-            //iMonitorIndex = Config.Bind("Set Custom Resolution",
-                                //"DisplayNumber",
-                                //(int)0,
-                                //new ConfigDescription("Set display number. Let's you change which monitor the game is displayed on.",
-                                //new AcceptableValueRange<int>(0, 8)));
-
             // Run UltrawidePatches
             if (bUltrawideFixes.Value)
             {
@@ -108,7 +102,6 @@ namespace SH2Fix
             }
 
             Harmony.CreateAndPatchAll(typeof(MiscellaneousPatches));
-
 
         }
 
@@ -183,7 +176,7 @@ namespace SH2Fix
                 }
 
                 // Render Scale
-                if (fRenderScale.Value > 9f)
+                if (fRenderScale.Value > 0f)
                 {
                     Log.LogInfo($"Old: Game RenderScale = {Game.Common.ConfigCtrl.GetRenderScale()}. URP m_RenderScale = {UniversalRenderPipeline.asset.m_RenderScale}");
                     Game.Common.ConfigCtrl.SetRenderScale((int)fRenderScale.Value);
@@ -199,74 +192,7 @@ namespace SH2Fix
                     Log.LogInfo($"New: LODBias set to {fLODBias.Value}");
                 }
 
-                // MSAA is broken, results in messed up graphics.
-                //Log.LogInfo($"antiAliasing = {QualitySettings.antiAliasing}");
-                //QualitySettings.antiAliasing = 8;
-                //Log.LogInfo($"URP m_MSAA = {UniversalRenderPipeline.asset.m_MSAA}");
-                //UniversalRenderPipeline.asset.m_MSAA = MsaaQuality._8x;
-
                 Log.LogInfo("Applied custom settings.");
-            }
-
-            // Cam stuff
-            [HarmonyPatch(typeof(VirtualCamera.RpVirtualCameraControl), nameof(VirtualCamera.RpVirtualCameraControl.SetActiveCamera))]
-            [HarmonyPostfix]
-            public static void Camstuff(ref VirtualCamera.RpVirtualCamera __0)
-            {
-                Log.LogInfo("camera changed!");
-
-                var renderers = Resources.FindObjectsOfTypeAll<Renderer>();
-                foreach (Renderer renderer in renderers)
-                {
-                    //Log.LogInfo($"Renderer = {renderer.name}");
-                   
-                }
-                var imageEffectManager = RpGraphics.RpGraphicsManager.GetImageEffectManager();
-                var silhouetterRenderer = imageEffectManager.GetRenderer<AtLib.AtGraphics.AtImageEffect.AtSilhouetteRenderer>();
-                silhouetterRenderer.enabled = false;
-
-            }
-
-            // Cam stuff
-            [HarmonyPatch(typeof(AtSilhouette), nameof(AtSilhouette._RenderCmd))]
-            [HarmonyPatch(typeof(AtSilhouette), nameof(AtSilhouette._OnRenderImage))]
-            [HarmonyPostfix]
-            public static void Camstuff4(AtSilhouette __instance, ref UnityEngine.Rendering.CommandBuffer __0)
-            {
-                Log.LogInfo($"CA rendercmd");
-
-                var imageEffectManager = RpGraphics.RpGraphicsManager.GetImageEffectManager();
-                var silhouetterRenderer = imageEffectManager.GetRenderer<AtLib.AtGraphics.AtImageEffect.AtSilhouetteRenderer>();
-                silhouetterRenderer.enabled = false;
-
-                //var imageEffMgr = RpGraphics.RpGraphicsManager.GetImageEffectManager();
-                //var vigRend = imageEffMgr.GetRenderer<AtLib.AtGraphics.AtImageEffect.AtVignetteRenderer>();
-                //__instance.m_chromAberrationMaterial.SetFloat("_AxialAberration", 0);
-                //__instance.m_chromAberrationMaterial.SetFloat("_ChromaticAberration", 0);
-                //__instance.m_chromAberrationMaterial.SetFloat("_Luminance", 0);
-                //__instance.m_chromAberrationMaterial.SetFloat("u_ChroAbre_Luminance", 0);
-                //__instance.m_chromAberrationMaterial.SetFloat("u_ChroAbre_ChromaticAberration", 0);
-                //__instance.m_chromAberrationMaterial.SetFloat("u_ChroAbre_AxialAberration", 0);
-                //__instance.m_separableBlurMaterial.SetVector("offsets", new Vector4(0f, 0f, 0f, 0f));
-                //__0.SetGlobalVector("u_SeparableBlur_offsets", new Vector4(0f, 0f, 0f, 0f));
-                //__instance.m_chromAberrationMaterial.DisableKeyword("_ChromaticAberration"); 
-                //__instance.m_chromAberrationMaterial.DisableKeyword("_AxialAberration");
-                //vigRend.SetEnable(false);
-                //vigRend.gameObject.SetActive(false);
-                // Log.LogInfo("Disalbed shit");
-
-                //__instance.m_vignetteMaterial.mainTexture = null;
-                //__instance.m_chromAberrationMaterial.mainTexture = null;
-                //__instance.m_separableBlurMaterial.mainTexture = null;
-                //__instance.m_vignetteMaterial.SetFloat("u_Vignette_Intensity", 0);
-                //__instance.m_chromAberrationMaterial.SetFloat("u_ChroAbre_ChromaticAberration", 0);
-                //__instance.m_chromAberrationMaterial.SetFloat("_ChromaticAberration", 0);
-                //__instance.m_vignetteMaterial.SetFloat("_Intensity", 0);
-                //__instance.m_separableBlurMaterial.SetVector("offsets", new Vector4(0,0,0,0));
-                //__instance._DestroyMaterial(__instance.m_separableBlurMaterial);
-                //__instance._DestroyMaterial(__instance.m_chromAberrationMaterial);
-                //__instance._DestroyMaterial(__instance.m_vignetteMaterial);
-
             }
 
             // Fix movement sliding
@@ -274,18 +200,28 @@ namespace SH2Fix
             [HarmonyPostfix]
             public static void FixSliding(MapNew.MapChara __instance)
             {
-                var global = MapNew.MapManager.GlobalSettings;
-                Log.LogInfo($"global.m_Companion.m_InterpolateMotionSec = {global.m_Companion.m_InterpolateMotionSec}");
-                Log.LogInfo($"global.m_Chara.m_RingoAnimSpeedFactor = {global.m_Chara.m_RingoAnimSpeedFactor}");
-                Log.LogInfo($"global.m_Common.m_PlayerMinMoveDistance = {global.m_Common.m_PlayerMinMoveDistance}");
-                Log.LogInfo($"global.m_Common.m_PlayerMoveMotionBlendTime = {global.m_Common.m_PlayerMoveMotionBlendTime}");
-                //global.m_Common.m_PlayerMinMoveDistance = 0.01f;
-                var currFPS = Screen.currentResolution.refreshRate;
-                float FPSDivider = (float)currFPS / (float)60; // Assuming default (0.1f) is for 60fps.
-                //global.m_Common.m_PlayerMoveMotionBlendTime = (float)0.1f / FPSDivider;
-                //global.m_Companion.m_InterpolateMotionSec = 10f;
-                //global.m_Chara.m_RingoAnimSpeedFactor = 20f;
-            }
+                if (bMovementFix.Value)
+                {
+                    var global = MapNew.MapManager.GlobalSettings;
+
+                    var currFPS = Game.Common.ConfigCtrl.GetFps() switch
+                    {
+                        Game.Common.eGameGraphicsFps.Free => Screen.currentResolution.refreshRate,
+                        Game.Common.eGameGraphicsFps.Fps30 => 30f,
+                        Game.Common.eGameGraphicsFps.Fps60 => 60f,
+                        Game.Common.eGameGraphicsFps.Fps75 => 75f,
+                        Game.Common.eGameGraphicsFps.Fps120 => 120f,
+                        Game.Common.eGameGraphicsFps.Fps144 => 144f,
+                        Game.Common.eGameGraphicsFps.Fps150 => 150f,
+                        Game.Common.eGameGraphicsFps.Max => Screen.currentResolution.refreshRate,
+                        _ => Screen.currentResolution.refreshRate,
+                    };
+
+                    float FPSDivider = (float)currFPS / (float)60; // Assuming default (0.1f) is for 60fps.
+                    global.m_Common.m_PlayerMoveMotionBlendTime = (float)0.1f / FPSDivider;
+                    //Log.LogInfo($"Set global.m_Common.m_PlayerMoveMotionBlendTime to {global.m_Common.m_PlayerMoveMotionBlendTime}");
+                }
+            } 
 
         }
 
@@ -329,7 +265,6 @@ namespace SH2Fix
             public static void ChangeReportedMonitorResolution2(ref int __0, ref int __1, ref int __2)
             {
                 Log.LogInfo($"Postfix: Old: Artdink.MonitoryUtility.GetMonitorResolution\nMonitor Index: {__0}, Width: {__1}, Height: {__2}");
-                //__0 = iMonitorIndex.Value;
                 __1 = (int)fDesiredResolutionX.Value;
                 __2 = (int)fDesiredResolutionY.Value;
                 Log.LogInfo($"Postfix: New: Artdink.MonitoryUtility.GetMonitorResolution\nMonitor Index: {__0}, Width: {__1}, Height: {__2}");
