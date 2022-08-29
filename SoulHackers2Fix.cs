@@ -10,10 +10,12 @@ using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
 
+using AtLib.AtGraphics.AtImageEffect;
+
 namespace SH2Fix
 {
     [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
-    public class SH2: BasePlugin
+    public class SH2 : BasePlugin
     {
         internal static new ManualLogSource Log;
 
@@ -31,6 +33,12 @@ namespace SH2Fix
         public static ConfigEntry<float> fDesiredResolutionX;
         public static ConfigEntry<float> fDesiredResolutionY;
         public static ConfigEntry<int> iWindowMode;
+
+        // Aspect Ratio
+        public static float DefaultAspectRatio = (float)16 / 9;
+        public static float NewAspectRatio = (float)Screen.width / Screen.height; // This is only calculated on startup. Potential issue?
+        public static float AspectMultiplier = NewAspectRatio / DefaultAspectRatio;
+        public static float AspectDivider = DefaultAspectRatio / NewAspectRatio;
 
         public override void Load()
         {
@@ -101,6 +109,7 @@ namespace SH2Fix
                 Harmony.CreateAndPatchAll(typeof(CustomResolutionPatches));
             }
 
+            Harmony.CreateAndPatchAll(typeof(EffectPatches));
             Harmony.CreateAndPatchAll(typeof(MiscellaneousPatches));
 
         }
@@ -108,11 +117,7 @@ namespace SH2Fix
         [HarmonyPatch]
         public class UltrawidePatches
         {
-            public static float DefaultAspectRatio = (float)16 / 9;
-            public static float NewAspectRatio = (float)Screen.width / Screen.height; // This is only calculated on startup. Potential issue.
-            public static float AspectMultiplier = NewAspectRatio / DefaultAspectRatio;
-            public static float AspectDivider = DefaultAspectRatio / NewAspectRatio;
-
+            
             public static GameObject LetterboxingUp;
             public static GameObject LetterboxingDown;
             public static GameObject LetterboxingLeft;
@@ -152,13 +157,13 @@ namespace SH2Fix
                     Log.LogInfo($"Disabled letterboxing.");
                 }
             }
+
+            
         }
 
         [HarmonyPatch]
         public class MiscellaneousPatches
         {
-            public static GameObject imageEffMgr;
-
             // Apply custom resolution
             [HarmonyPatch(typeof(Game.Common.ConfigCtrl), nameof(Game.Common.ConfigCtrl.ApplyGraphicsSettings))]
             [HarmonyPostfix]
@@ -219,9 +224,10 @@ namespace SH2Fix
 
                     float FPSDivider = (float)currFPS / (float)60; // Assuming default (0.1f) is for 60fps.
                     global.m_Common.m_PlayerMoveMotionBlendTime = (float)0.1f / FPSDivider;
+
                     //Log.LogInfo($"Set global.m_Common.m_PlayerMoveMotionBlendTime to {global.m_Common.m_PlayerMoveMotionBlendTime}");
                 }
-            } 
+            }
 
         }
 
@@ -270,7 +276,43 @@ namespace SH2Fix
                 Log.LogInfo($"Postfix: New: Artdink.MonitoryUtility.GetMonitorResolution\nMonitor Index: {__0}, Width: {__1}, Height: {__2}");
             }
 
+        }
 
+        [HarmonyPatch]
+        public class EffectPatches
+        {
+            // Glitch Effect
+            [HarmonyPatch(typeof(Demo.StImageEffectGlitch), nameof(Demo.StImageEffectGlitch.OnStateBegin))]
+            [HarmonyPrefix]
+            public static void GlitchEffect(Demo.StImageEffectGlitch __instance)
+            {
+                // TODO: Add config entry
+                bool bDisableChromaticAbberation = true;
+                if (bDisableChromaticAbberation)
+                {
+                    Log.LogInfo($"Glitch Effect: Start");
+                    AtGlitch.u_colorGap = 0;
+                    Log.LogInfo($"Glitch Effect: Set color gap to {AtGlitch.u_colorGap}");
+                }
+            }
+
+            // Vignette + Chromatic Aberration
+            [HarmonyPatch(typeof(Demo.StImageEffectVignette), nameof(Demo.StImageEffectVignette.OnStateBegin))]
+            [HarmonyPostfix]
+            public static void VignetteEffect(Demo.StImageEffectVignette __instance)
+            {
+                // TODO: Add config entry
+                bool bDisableChromaticAbberation = true;
+                if (bDisableChromaticAbberation)
+                {
+                    Log.LogInfo($"Vignette Effect: Start");
+
+                    var imageEffectManager = RpGraphics.RpGraphicsManager.GetImageEffectManager();
+                    var vignetteRenderer = imageEffectManager.GetRenderer<AtLib.AtGraphics.AtImageEffect.AtVignetteRenderer>();
+                    vignetteRenderer.enabled = false;
+                    Log.LogInfo($"Vignette Effect: Disabled vignette renderer.");
+                }
+            }
         }
     }
 }
