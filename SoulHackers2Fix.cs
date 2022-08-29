@@ -46,7 +46,7 @@ namespace SH2Fix
             bMovementFix = Config.Bind("General",
                                 "MovementFix",
                                 true,
-                                "Set to true to fix slidey movement on Ringo. It uses your refresh rate to calculate a new blend time for the movement animation.");
+                                "Set to true to fix slidey movement on Ringo.");
 
             // Graphics
             iAnisotropicFiltering = Config.Bind("Graphical Tweaks",
