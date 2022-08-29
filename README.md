@@ -6,6 +6,9 @@ This WIP BepInEx plugin for the game Soul Hackers 2 features:
 - Proper ultrawide and non-16:9 aspect ratio support with pillarbox removal.
 - Custom resolution support.
 - Graphical tweaks to increase fidelity.
+  - Anisotropic Filtering
+  - LOD Bias
+  - Render Scale (Resolution Scale)
 - Fix for slidey character movement above 60fps.
 
 ## Installation
