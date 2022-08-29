@@ -6,6 +6,7 @@ This WIP BepInEx plugin for the game Soul Hackers 2 features:
 - Proper ultrawide and non-16:9 aspect ratio support with pillarbox removal.
 - Custom resolution support.
 - Graphical tweaks to increase fidelity.
+- Fix for slidey character movement above 60fps.
 
 ## Installation
 - Grab the latest release of SoulHackers2Fix from [here.](https://github.com/Lyall/SoulHackers2Fix/releases)
