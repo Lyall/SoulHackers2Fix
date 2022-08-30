@@ -43,7 +43,5 @@ Please report any issues you see.
 :-------------------------:|:-------------------------:
 Chromatic Aberration On |  Chromatic Aberration Off
 
-
-  
 ## Credits
 - [BepinEx](https://github.com/BepInEx/BepInEx) is licensed under the GNU Lesser General Public License v2.1.
