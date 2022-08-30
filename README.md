@@ -39,5 +39,11 @@ Please report any issues you see.
 |:--:|
 | Ultrawide pillarbox removal. | 
 
+![CA On](https://user-images.githubusercontent.com/695941/187334877-2768b152-7f49-4787-b5a6-f8e4b4befb4a.jpg)|  ![CA Off](https://user-images.githubusercontent.com/695941/187334873-36430911-4eae-432b-9aa5-72708a212cb2.jpg)  
+:-------------------------:|:-------------------------:
+Chromatic Aberration On |  Chromatic Aberration Off
+
+
+  
 ## Credits
 - [BepinEx](https://github.com/BepInEx/BepInEx) is licensed under the GNU Lesser General Public License v2.1.
