@@ -283,10 +283,10 @@ namespace SH2Fix
         [HarmonyPatch]
         public class EffectPatches
         {
-            // Glitch Effect
+            // Effect Toggles
             [HarmonyPatch(typeof(RpGraphics.RpImageEffectData), nameof(RpGraphics.RpImageEffectData.OnEnable))]
             [HarmonyPostfix]
-            public static void GlitchEffect()
+            public static void EffectToggles()
             {
                 if (bDisableChromaticAberration.Value)
                 {
