@@ -291,8 +291,8 @@ namespace SH2Fix
                 if (bDisableChromaticAberration.Value)
                 {
                     AtGlitch.u_colorGap = 0;
-                    //Log.LogInfo($"Glitch Effect: Set color gap to {AtGlitch.u_colorGap}");
-                    //Log.LogInfo($"Vignette Effect: Render disabled");
+                    Log.LogInfo($"Glitch Effect: Set color gap to {AtGlitch.u_colorGap}");
+                    Log.LogInfo($"Vignette Effect: Render disabled");
                     var imageEffectManager = RpGraphics.RpGraphicsManager.GetImageEffectManager();
                     var vignetteRenderer = imageEffectManager.GetRenderer<AtVignetteRenderer>();
                     vignetteRenderer.enabled = false;
