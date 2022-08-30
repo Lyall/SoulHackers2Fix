@@ -24,6 +24,7 @@ namespace SH2Fix
         public static ConfigEntry<bool> bMovementFix;
 
         // Graphics
+        public static ConfigEntry<bool> bDisableChromaticAberration;
         public static ConfigEntry<int> iAnisotropicFiltering;
         public static ConfigEntry<float> fLODBias;
         public static ConfigEntry<float> fRenderScale;
@@ -57,6 +58,11 @@ namespace SH2Fix
                                 "Set to true to fix slidey movement on Ringo.");
 
             // Graphics
+            bDisableChromaticAberration = Config.Bind("Graphical Tweaks",
+                                "DisableChromaticAberration",
+                                false, // Default to false, maybe people like it.
+                                "Set to true to disable chromatic aberration effects.");
+
             iAnisotropicFiltering = Config.Bind("Graphical Tweaks",
                                 "AnisotropicFiltering.Value",
                                 (int)16,
@@ -156,9 +162,7 @@ namespace SH2Fix
                     bLetterboxPatchHasRun = true;
                     Log.LogInfo($"Disabled letterboxing.");
                 }
-            }
-
-            
+            }            
         }
 
         [HarmonyPatch]
@@ -228,9 +232,7 @@ namespace SH2Fix
                     //Log.LogInfo($"Set global.m_Common.m_PlayerMoveMotionBlendTime to {global.m_Common.m_PlayerMoveMotionBlendTime}");
                 }
             }
-
         }
-
 
         [HarmonyPatch]
         public class CustomResolutionPatches
@@ -282,35 +284,19 @@ namespace SH2Fix
         public class EffectPatches
         {
             // Glitch Effect
-            [HarmonyPatch(typeof(Demo.StImageEffectGlitch), nameof(Demo.StImageEffectGlitch.OnStateBegin))]
-            [HarmonyPrefix]
-            public static void GlitchEffect(Demo.StImageEffectGlitch __instance)
-            {
-                // TODO: Add config entry
-                bool bDisableChromaticAbberation = true;
-                if (bDisableChromaticAbberation)
-                {
-                    Log.LogInfo($"Glitch Effect: Start");
-                    AtGlitch.u_colorGap = 0;
-                    Log.LogInfo($"Glitch Effect: Set color gap to {AtGlitch.u_colorGap}");
-                }
-            }
-
-            // Vignette + Chromatic Aberration
-            [HarmonyPatch(typeof(Demo.StImageEffectVignette), nameof(Demo.StImageEffectVignette.OnStateBegin))]
+            [HarmonyPatch(typeof(RpGraphics.RpImageEffectData), nameof(RpGraphics.RpImageEffectData.OnEnable))]
             [HarmonyPostfix]
-            public static void VignetteEffect(Demo.StImageEffectVignette __instance)
+            public static void GlitchEffect()
             {
-                // TODO: Add config entry
-                bool bDisableChromaticAbberation = true;
-                if (bDisableChromaticAbberation)
+                if (bDisableChromaticAberration.Value)
                 {
-                    Log.LogInfo($"Vignette Effect: Start");
-
+                    AtGlitch.u_colorGap = 0;
+                    //Log.LogInfo($"Glitch Effect: Set color gap to {AtGlitch.u_colorGap}");
+                    //Log.LogInfo($"Vignette Effect: Render disabled");
                     var imageEffectManager = RpGraphics.RpGraphicsManager.GetImageEffectManager();
-                    var vignetteRenderer = imageEffectManager.GetRenderer<AtLib.AtGraphics.AtImageEffect.AtVignetteRenderer>();
+                    var vignetteRenderer = imageEffectManager.GetRenderer<AtVignetteRenderer>();
                     vignetteRenderer.enabled = false;
-                    Log.LogInfo($"Vignette Effect: Disabled vignette renderer.");
+                    
                 }
             }
         }
