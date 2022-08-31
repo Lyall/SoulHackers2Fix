@@ -32,12 +32,16 @@ This WIP BepInEx plugin for the game Soul Hackers 2 features:
 
 ## Known Issues
 Please report any issues you see.
-- Resolution on startup is rather buggy and seems to change by itself. I am looking into this.
+- Fullscreen exclusive for custom resolutions does not seem to work properly at the moment.
 
 ## Screenshots
 | ![ezgif-5-8c9e6fffc1](https://user-images.githubusercontent.com/695941/187015446-42c19f43-c3e6-48f6-811f-f0fb120deedb.gif) |
 |:--:|
 | Ultrawide pillarbox removal. | 
+
+![CA On](https://user-images.githubusercontent.com/695941/187334877-2768b152-7f49-4787-b5a6-f8e4b4befb4a.jpg)|  ![CA Off](https://user-images.githubusercontent.com/695941/187334873-36430911-4eae-432b-9aa5-72708a212cb2.jpg)  
+:-------------------------:|:-------------------------:
+Chromatic Aberration On |  Chromatic Aberration Off
 
 ## Credits
 - [BepinEx](https://github.com/BepInEx/BepInEx) is licensed under the GNU Lesser General Public License v2.1.
