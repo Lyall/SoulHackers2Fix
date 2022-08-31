@@ -55,7 +55,7 @@ namespace SH2Fix
             bMovementFix = Config.Bind("General",
                                 "MovementFix",
                                 true,
-                                "Set to true to fix slidey movement on Ringo.");
+                                "Set to true to fix player movement above 60fps.");
 
             // Graphics
             bDisableChromaticAberration = Config.Bind("Graphical Tweaks",
@@ -258,6 +258,8 @@ namespace SH2Fix
                     __1 = (int)fDesiredResolutionY.Value;
                     __2 = fullscreenMode;
 
+                    Game.Common.ConfigCtrl.SetResolutionW((int)fDesiredResolutionX.Value);
+                    Game.Common.ConfigCtrl.SetResolutionH((int)fDesiredResolutionY.Value);
                     Log.LogInfo($"Prefix: New: Set resolution = {(int)fDesiredResolutionX.Value}x{(int)fDesiredResolutionY.Value}. Window mode = {fullscreenMode}");
                     return true;
                 }
@@ -277,7 +279,6 @@ namespace SH2Fix
                 __2 = (int)fDesiredResolutionY.Value;
                 Log.LogInfo($"Postfix: New: Artdink.MonitoryUtility.GetMonitorResolution\nMonitor Index: {__0}, Width: {__1}, Height: {__2}");
             }
-
         }
 
         [HarmonyPatch]
@@ -288,15 +289,31 @@ namespace SH2Fix
             [HarmonyPostfix]
             public static void EffectToggles()
             {
+                var imageEffectManager = RpGraphics.RpGraphicsManager.GetImageEffectManager();
+
                 if (bDisableChromaticAberration.Value)
                 {
                     AtGlitch.u_colorGap = 0;
                     Log.LogInfo($"Glitch Effect: Set color gap to {AtGlitch.u_colorGap}");
-                    Log.LogInfo($"Vignette Effect: Render disabled");
-                    var imageEffectManager = RpGraphics.RpGraphicsManager.GetImageEffectManager();
+                    Log.LogInfo($"Vignette Effect: Renderer disabled");
                     var vignetteRenderer = imageEffectManager.GetRenderer<AtVignetteRenderer>();
                     vignetteRenderer.enabled = false;
-                    
+                }
+
+                bool bDisableMotionBlur = false;
+                if (bDisableMotionBlur)
+                {                  
+                    var radialBlurRenderer = imageEffectManager.GetRenderer<AtRadialBlurRenderer>();
+                    radialBlurRenderer.enabled = false;
+                    Log.LogInfo($"Radial Blur Effect: Renderer disabled");
+
+                    var motionBlurRenderer = imageEffectManager.GetRenderer<AtMotionBlurRenderer>();
+                    motionBlurRenderer.enabled = false;
+                    Log.LogInfo($"Motion Blur Effect: Renderer disabled");
+
+                    var blurRenderer = imageEffectManager.GetRenderer<AtBlurRenderer>();
+                    blurRenderer.enabled = false;
+                    Log.LogInfo($"Blur Effect: Renderer disabled");
                 }
             }
         }
