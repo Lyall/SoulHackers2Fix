@@ -23,6 +23,7 @@ namespace SH2Fix
 
         // Graphics
         public static ConfigEntry<bool> bDisableChromaticAberration;
+        public static ConfigEntry<bool> bDisableMotionBlur;
         public static ConfigEntry<int> iAnisotropicFiltering;
         public static ConfigEntry<float> fLODBias;
         public static ConfigEntry<float> fRenderScale;
@@ -60,6 +61,11 @@ namespace SH2Fix
                                 "DisableChromaticAberration",
                                 false, // Default to false, maybe people like it.
                                 "Set to true to disable chromatic aberration effects.");
+
+            bDisableMotionBlur = Config.Bind("Graphical Tweaks",
+                                "DisableChromaticAberration",
+                                false, // Default to false, maybe people like it.
+                                "Set to true to disable motion blur + radial blur effects.");
 
             iAnisotropicFiltering = Config.Bind("Graphical Tweaks",
                                 "AnisotropicFiltering.Value",
@@ -276,8 +282,7 @@ namespace SH2Fix
                     vignetteRenderer.enabled = false;
                 }
 
-                bool bDisableMotionBlur = false;
-                if (bDisableMotionBlur)
+                if (bDisableMotionBlur.Value)
                 {                  
                     var radialBlurRenderer = imageEffectManager.GetRenderer<AtRadialBlurRenderer>();
                     radialBlurRenderer.enabled = false;
@@ -286,10 +291,6 @@ namespace SH2Fix
                     var motionBlurRenderer = imageEffectManager.GetRenderer<AtMotionBlurRenderer>();
                     motionBlurRenderer.enabled = false;
                     Log.LogInfo($"Motion Blur Effect: Renderer disabled");
-
-                    var blurRenderer = imageEffectManager.GetRenderer<AtBlurRenderer>();
-                    blurRenderer.enabled = false;
-                    Log.LogInfo($"Blur Effect: Renderer disabled");
                 }
             }
         }
