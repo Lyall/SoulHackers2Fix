@@ -63,7 +63,7 @@ namespace SH2Fix
                                 "Set to true to disable chromatic aberration effects.");
 
             bDisableMotionBlur = Config.Bind("Graphical Tweaks",
-                                "DisableChromaticAberration",
+                                "DisableMotionBlur",
                                 false, // Default to false, maybe people like it.
                                 "Set to true to disable motion blur + radial blur effects.");
 
