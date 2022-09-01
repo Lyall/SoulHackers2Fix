@@ -2,9 +2,7 @@
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
-
 using HarmonyLib;
-using System;
 
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
@@ -100,8 +98,8 @@ namespace SH2Fix
             iWindowMode = Config.Bind("Set Custom Resolution",
                                 "WindowMode",
                                 (int)2,
-                                new ConfigDescription("Set window mode. 1 = Exclusive Fullscreen, 2 = Fullscreen Windowed, 3 = Maximized Window, 4 = Windowed.",
-                                new AcceptableValueRange<int>(1, 4)));
+                                new ConfigDescription("Set window mode. 1 = Borderless, 2 = Windowed.\nExclusive Fullscreen is broken at the moment.",
+                                new AcceptableValueRange<int>(1, 2)));
 
             // Run UltrawidePatches
             if (bUltrawideFixes.Value)
@@ -168,7 +166,7 @@ namespace SH2Fix
         [HarmonyPatch]
         public class MiscellaneousPatches
         {
-            // Apply custom resolution
+            // Adjust graphics settings
             [HarmonyPatch(typeof(Game.Common.ConfigCtrl), nameof(Game.Common.ConfigCtrl.ApplyGraphicsSettings))]
             [HarmonyPostfix]
             public static void PostApplyGraphicsSettings()
@@ -200,7 +198,6 @@ namespace SH2Fix
                     QualitySettings.lodBias = fLODBias.Value; // Default = 1.5f    
                     Log.LogInfo($"New: LODBias set to {fLODBias.Value}");
                 }
-
                 Log.LogInfo("Applied custom settings.");
             }
 
@@ -228,8 +225,6 @@ namespace SH2Fix
 
                     float FPSDivider = (float)currFPS / (float)60; // Assuming default (0.1f) is for 60fps.
                     global.m_Common.m_PlayerMoveMotionBlendTime = (float)0.1f / FPSDivider;
-
-                    //Log.LogInfo($"Set global.m_Common.m_PlayerMoveMotionBlendTime to {global.m_Common.m_PlayerMoveMotionBlendTime}");
                 }
             }
         }
@@ -237,48 +232,38 @@ namespace SH2Fix
         [HarmonyPatch]
         public class CustomResolutionPatches
         {
-            // Apply custom resolution
-            [HarmonyPatch(typeof(Screen), nameof(Screen.SetResolution), new Type[] { typeof(int), typeof(int), typeof(UnityEngine.FullScreenMode) })]
+            // Custom Resolution 1
+            [HarmonyPatch(typeof(Game.Common.ConfigCtrl._moveExclusiveFullScreenDisplay_d__106), nameof(Game.Common.ConfigCtrl._moveExclusiveFullScreenDisplay_d__106.MoveNext))]
             [HarmonyPrefix]
-            public static bool ApplyCustomResolution(ref int __0, ref int __1, ref UnityEngine.FullScreenMode __2)
+            public static bool ChangeReportedMonitorResolution5(Game.Common.ConfigCtrl._moveExclusiveFullScreenDisplay_d__106 __instance)
             {
-                if (fDesiredResolutionX.Value > 0 && fDesiredResolutionY.Value > 0)
+                Log.LogInfo($"Custom Resolution: Killed weird method.");
+                return false;
+            }
+
+            // Custom Resolution 2
+            [HarmonyPatch(typeof(Game.Common.ConfigCtrl), nameof(Game.Common.ConfigCtrl.SetDisplayAndResolutionAll))]
+            [HarmonyPrefix]
+            public static bool ChangeReportedMonitorResolution6(ref bool __0, ref bool __1, ref bool __2, ref int __3, ref Game.Common.eGameGraphicsScreenModeSetting __4, ref int __5, ref int __6)
+            {
+                var screenMode = iWindowMode.Value switch
                 {
-                    var fullscreenMode = iWindowMode.Value switch
-                    {
-                        1 => UnityEngine.FullScreenMode.ExclusiveFullScreen,
-                        2 => UnityEngine.FullScreenMode.FullScreenWindow,
-                        3 => UnityEngine.FullScreenMode.MaximizedWindow,
-                        4 => UnityEngine.FullScreenMode.Windowed,
-                        _ => UnityEngine.FullScreenMode.FullScreenWindow,
-                    };
+                    //1 => Game.Common.eGameGraphicsScreenModeSetting.ExclusiveFullScreen, // Exclusive Full Screen - Broken?
+                    1 => Game.Common.eGameGraphicsScreenModeSetting.FullScreen, // Borderless
+                    2 => Game.Common.eGameGraphicsScreenModeSetting.Window, // Windowed
+                    _ => Game.Common.eGameGraphicsScreenModeSetting.FullScreen, // Borderless
+                };
 
-                    Log.LogInfo($"Prefix: Old: Set resolution = {__0}x{__1}. Window mode = {__2}");
-                    __0 = (int)fDesiredResolutionX.Value;
-                    __1 = (int)fDesiredResolutionY.Value;
-                    __2 = fullscreenMode;
-
-                    Game.Common.ConfigCtrl.SetResolutionW((int)fDesiredResolutionX.Value);
-                    Game.Common.ConfigCtrl.SetResolutionH((int)fDesiredResolutionY.Value);
-                    Log.LogInfo($"Prefix: New: Set resolution = {(int)fDesiredResolutionX.Value}x{(int)fDesiredResolutionY.Value}. Window mode = {fullscreenMode}");
-                    return true;
-                }
-                // Don't change anything if resolution is set to 0 on any axis
+                Log.LogInfo($"Custom Resolution: SetDisplayAndResolutionAll: reso = {__0}, screen = {__1}, monitor = {__2}, monNum = {__3}, screenMode = {__4}, w = {__5}, h = {__6}");
+                Game.Common.ConfigCtrl.SetResolutionW((int)fDesiredResolutionX.Value);
+                Game.Common.ConfigCtrl.SetResolutionH((int)fDesiredResolutionY.Value);
+                Game.Common.ConfigCtrl.SetScreenMode(screenMode);
+                __5 = (int)fDesiredResolutionX.Value;
+                __6 = (int)fDesiredResolutionY.Value;
+                __4 = screenMode;
                 return true;
             }
 
-            // Override monitor capabilities.
-            // I honestly don't know exactly what the fuck kind of weird shit they are doing with this, but overriding it fixes custom resolutions.
-            // ??????
-            [HarmonyPatch(typeof(RedPencil.Artdink.MonitorUtility), nameof(RedPencil.Artdink.MonitorUtility.GetMonitorResolution))]
-            [HarmonyPostfix]
-            public static void ChangeReportedMonitorResolution2(ref int __0, ref int __1, ref int __2)
-            {
-                Log.LogInfo($"Postfix: Old: Artdink.MonitoryUtility.GetMonitorResolution\nMonitor Index: {__0}, Width: {__1}, Height: {__2}");
-                __1 = (int)fDesiredResolutionX.Value;
-                __2 = (int)fDesiredResolutionY.Value;
-                Log.LogInfo($"Postfix: New: Artdink.MonitoryUtility.GetMonitorResolution\nMonitor Index: {__0}, Width: {__1}, Height: {__2}");
-            }
         }
 
         [HarmonyPatch]
