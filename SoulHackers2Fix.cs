@@ -232,16 +232,7 @@ namespace SH2Fix
         [HarmonyPatch]
         public class CustomResolutionPatches
         {
-            // Custom Resolution 1
-            [HarmonyPatch(typeof(Game.Common.ConfigCtrl._moveExclusiveFullScreenDisplay_d__106), nameof(Game.Common.ConfigCtrl._moveExclusiveFullScreenDisplay_d__106.MoveNext))]
-            [HarmonyPrefix]
-            public static bool ChangeReportedMonitorResolution5(Game.Common.ConfigCtrl._moveExclusiveFullScreenDisplay_d__106 __instance)
-            {
-                Log.LogInfo($"Custom Resolution: Killed weird method.");
-                return false;
-            }
-
-            // Custom Resolution 2
+            // Apply Custom Resolution
             [HarmonyPatch(typeof(Game.Common.ConfigCtrl), nameof(Game.Common.ConfigCtrl.SetDisplayAndResolutionAll))]
             [HarmonyPrefix]
             public static bool ChangeReportedMonitorResolution6(ref bool __0, ref bool __1, ref bool __2, ref int __3, ref Game.Common.eGameGraphicsScreenModeSetting __4, ref int __5, ref int __6)
@@ -254,16 +245,16 @@ namespace SH2Fix
                     _ => Game.Common.eGameGraphicsScreenModeSetting.FullScreen, // Borderless
                 };
 
-                Log.LogInfo($"Custom Resolution: SetDisplayAndResolutionAll: reso = {__0}, screen = {__1}, monitor = {__2}, monNum = {__3}, screenMode = {__4}, w = {__5}, h = {__6}");
+                Log.LogInfo($"Custom Resolution: Old: SetDisplayAndResolutionAll: reso = {__0}, screen = {__1}, monitor = {__2}, monNum = {__3}, screenMode = {__4}, w = {__5}, h = {__6}");
                 Game.Common.ConfigCtrl.SetResolutionW((int)fDesiredResolutionX.Value);
                 Game.Common.ConfigCtrl.SetResolutionH((int)fDesiredResolutionY.Value);
                 Game.Common.ConfigCtrl.SetScreenMode(screenMode);
                 __5 = (int)fDesiredResolutionX.Value;
                 __6 = (int)fDesiredResolutionY.Value;
                 __4 = screenMode;
+                Log.LogInfo($"Custom Resolution: New: SetDisplayAndResolutionAll: reso = {__0}, screen = {__1}, monitor = {__2}, monNum = {__3}, screenMode = {__4}, w = {__5}, h = {__6}");
                 return true;
             }
-
         }
 
         [HarmonyPatch]
