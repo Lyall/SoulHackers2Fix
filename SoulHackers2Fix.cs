@@ -241,7 +241,7 @@ namespace SH2Fix
             // Apply Custom Resolution
             [HarmonyPatch(typeof(Game.Common.ConfigCtrl), nameof(Game.Common.ConfigCtrl.SetDisplayAndResolutionAll))]
             [HarmonyPrefix]
-            public static bool ChangeReportedMonitorResolution6(ref bool __0, ref bool __1, ref bool __2, ref int __3, ref Game.Common.eGameGraphicsScreenModeSetting __4, ref int __5, ref int __6)
+            public static bool ForceCustomResolution(ref bool __0, ref bool __1, ref bool __2, ref int __3, ref Game.Common.eGameGraphicsScreenModeSetting __4, ref int __5, ref int __6)
             {
                 var screenMode = iWindowMode.Value switch
                 {
