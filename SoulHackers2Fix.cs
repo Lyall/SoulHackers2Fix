@@ -20,10 +20,10 @@ namespace SH2Fix
         // Features
         public static ConfigEntry<bool> bUltrawideFixes;
         public static ConfigEntry<bool> bMovementFix;
+        public static ConfigEntry<float> fMovementFix;
 
         // Graphics
         public static ConfigEntry<bool> bDisableChromaticAberration;
-        public static ConfigEntry<bool> bDisableMotionBlur;
         public static ConfigEntry<int> iAnisotropicFiltering;
         public static ConfigEntry<float> fLODBias;
         public static ConfigEntry<float> fRenderScale;
@@ -51,21 +51,25 @@ namespace SH2Fix
                                 "UltrawideFixes",
                                 true,
                                 "Set to true to enable ultrawide UI fixes.");
+
             bMovementFix = Config.Bind("General",
                                 "MovementFix",
                                 true,
                                 "Set to true to fix player movement above 60fps.");
+
+            fMovementFix = Config.Bind("General",
+                                "MovementFix.Value",
+                                (float)0f, // Game Default = 0.1f | Leave on 0 to auto calculate
+                                new ConfigDescription("Set player motion blend time. Lower values reduce the amount of time it takes to come to a stop after moving.\n" +
+                                "You can set this to 0 to have the fix calculate this automatically.\n" +
+                                "Game Default = 0.1",
+                                new AcceptableValueRange<float>(0f, 10f)));
 
             // Graphics
             bDisableChromaticAberration = Config.Bind("Graphical Tweaks",
                                 "DisableChromaticAberration",
                                 false, // Default to false, maybe people like it.
                                 "Set to true to disable chromatic aberration effects.");
-
-            bDisableMotionBlur = Config.Bind("Graphical Tweaks",
-                                "DisableMotionBlur",
-                                false, // Default to false, maybe people like it.
-                                "Set to true to disable motion blur + radial blur effects.");
 
             iAnisotropicFiltering = Config.Bind("Graphical Tweaks",
                                 "AnisotropicFiltering.Value",
@@ -103,7 +107,7 @@ namespace SH2Fix
 
             iWindowMode = Config.Bind("Set Custom Resolution",
                                 "WindowMode",
-                                (int)2,
+                                (int)1,
                                 new ConfigDescription("Set window mode. 1 = Borderless, 2 = Windowed.\nExclusive Fullscreen is broken at the moment.",
                                 new AcceptableValueRange<int>(1, 2)));
 
@@ -126,8 +130,7 @@ namespace SH2Fix
 
         [HarmonyPatch]
         public class UltrawidePatches
-        {
-            
+        {   
             public static GameObject LetterboxingUp;
             public static GameObject LetterboxingDown;
             public static GameObject LetterboxingLeft;
@@ -172,6 +175,8 @@ namespace SH2Fix
         [HarmonyPatch]
         public class MiscellaneousPatches
         {
+            public static bool bMovementLogHasRun = false;
+
             // Adjust graphics settings
             [HarmonyPatch(typeof(Game.Common.ConfigCtrl), nameof(Game.Common.ConfigCtrl.ApplyGraphicsSettings))]
             [HarmonyPostfix]
@@ -216,21 +221,42 @@ namespace SH2Fix
                 {
                     var global = MapNew.MapManager.GlobalSettings;
 
-                    var currFPS = Game.Common.ConfigCtrl.GetFps() switch
+                    if (fMovementFix.Value == 0f)
                     {
-                        Game.Common.eGameGraphicsFps.Free => Screen.currentResolution.refreshRate,
-                        Game.Common.eGameGraphicsFps.Fps30 => 30f,
-                        Game.Common.eGameGraphicsFps.Fps60 => 60f,
-                        Game.Common.eGameGraphicsFps.Fps75 => 75f,
-                        Game.Common.eGameGraphicsFps.Fps120 => 120f,
-                        Game.Common.eGameGraphicsFps.Fps144 => 144f,
-                        Game.Common.eGameGraphicsFps.Fps150 => 150f,
-                        Game.Common.eGameGraphicsFps.Max => Screen.currentResolution.refreshRate,
-                        _ => Screen.currentResolution.refreshRate,
-                    };
+                        // Calculate motion blend time based on FPS cap.
+                        var currFPS = Game.Common.ConfigCtrl.GetFps() switch
+                        {
+                            Game.Common.eGameGraphicsFps.Free => Screen.currentResolution.refreshRate,
+                            Game.Common.eGameGraphicsFps.Fps30 => 30f,
+                            Game.Common.eGameGraphicsFps.Fps60 => 60f,
+                            Game.Common.eGameGraphicsFps.Fps75 => 75f,
+                            Game.Common.eGameGraphicsFps.Fps120 => 120f,
+                            Game.Common.eGameGraphicsFps.Fps144 => 144f,
+                            Game.Common.eGameGraphicsFps.Fps150 => 150f,
+                            Game.Common.eGameGraphicsFps.Max => Screen.currentResolution.refreshRate,
+                            _ => Screen.currentResolution.refreshRate,
+                        };
 
-                    float FPSDivider = (float)currFPS / (float)60; // Assuming default (0.1f) is for 60fps.
-                    global.m_Common.m_PlayerMoveMotionBlendTime = (float)0.1f / FPSDivider;
+                        float FPSDivider = (float)currFPS / (float)60; // Assuming default (0.1f) is for 60fps.
+                        global.m_Common.m_PlayerMoveMotionBlendTime = (float)0.1f / FPSDivider;
+                        if (!bMovementLogHasRun)
+                        {
+                            Log.LogInfo($"MovementFix: Automatic: currFPS = {currFPS}, PlayerMoveMotionBlendTime = {global.m_Common.m_PlayerMoveMotionBlendTime}.");
+                            bMovementLogHasRun = true;
+                        }
+                        
+                    }
+                    else if (fMovementFix.Value > 0f)
+                    {
+                        // Set to value defined in config.
+                        global.m_Common.m_PlayerMoveMotionBlendTime = fMovementFix.Value;
+                        if (!bMovementLogHasRun)
+                        {
+                            Log.LogInfo($"MovementFix: Manual: PlayerMoveMotionBlendTime = {global.m_Common.m_PlayerMoveMotionBlendTime}.");
+                            bMovementLogHasRun = true;
+                        }
+                        
+                    }
                 }
             }
         }
@@ -280,17 +306,6 @@ namespace SH2Fix
                     Log.LogInfo($"Vignette Effect: Renderer disabled");
                     var vignetteRenderer = imageEffectManager.GetRenderer<AtVignetteRenderer>();
                     vignetteRenderer.enabled = false;
-                }
-
-                if (bDisableMotionBlur.Value)
-                {                  
-                    var radialBlurRenderer = imageEffectManager.GetRenderer<AtRadialBlurRenderer>();
-                    radialBlurRenderer.enabled = false;
-                    Log.LogInfo($"Radial Blur Effect: Renderer disabled");
-
-                    var motionBlurRenderer = imageEffectManager.GetRenderer<AtMotionBlurRenderer>();
-                    motionBlurRenderer.enabled = false;
-                    Log.LogInfo($"Motion Blur Effect: Renderer disabled");
                 }
             }
         }
